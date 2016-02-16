@@ -3,6 +3,7 @@ plugins {
     id "com.github.jruby-gradle.base" version "0.1.5"
     id "java"
     id "checkstyle"
+    id "eclipse"
 }
 import com.github.jrubygradle.JRubyExec
 repositories {
@@ -73,7 +74,7 @@ task gemspec {
 Gem::Specification.new do |spec|
   spec.name          = "${project.name}"
   spec.version       = "${project.version}"
-  spec.authors       = ["\u{5409}\u{7530}\u{3000}\u{5320}"]
+  spec.authors       = ["takumyos"]
   spec.summary       = %[Solr output plugin for Embulk]
   spec.description   = %[Dumps records to Solr.]
   spec.email         = ["takumyos@yahoo-corp.jp"]
