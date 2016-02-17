@@ -26,6 +26,8 @@ dependencies {
     compile  "org.apache.solr:solr-solrj:5.2.1"
     compile  "commons-logging:commons-logging:1.2"
     testCompile "junit:junit:4.+"
+    testCompile "org.embulk:embulk-core:0.8.3:tests"
+    testCompile "org.embulk:embulk-standards:0.8.3"
 }
 
 task classpath(type: Copy, dependsOn: ["jar"]) {

@@ -41,7 +41,7 @@ public class SolrOutputPlugin implements OutputPlugin {
 
         @Config("collection")
         public String getCollection();
-        
+
         @Config("bulkSize")
         @ConfigDefault("1000")
         public int getBulkSize();
@@ -101,7 +101,7 @@ public class SolrOutputPlugin implements OutputPlugin {
         private final Schema schema;
         private PluginTask task;
         private final int bulkSize;
-        
+
         List<SolrInputDocument> documentList = new LinkedList<SolrInputDocument>();
 
         public SolrPageOutput(SolrClient client, Schema schema, PluginTask task) {
@@ -118,13 +118,13 @@ public class SolrOutputPlugin implements OutputPlugin {
             pageReader.setPage(page);
             while (pageReader.nextRecord()) {
                 final SolrInputDocument doc = new SolrInputDocument();
-                
+
                 schema.visitColumns(new ColumnVisitor() {
 
                     @Override
                     public void booleanColumn(Column column) {
                         if (pageReader.isNull(column)) {
-                            //do nothing.
+                            // do nothing.
                         } else {
                             boolean value = pageReader.getBoolean(column);
                             doc.addField(column.getName(), value);
@@ -134,7 +134,7 @@ public class SolrOutputPlugin implements OutputPlugin {
                     @Override
                     public void longColumn(Column column) {
                         if (pageReader.isNull(column)) {
-                            //do nothing.
+                            // do nothing.
                         } else {
                             long value = pageReader.getLong(column);
                             doc.addField(column.getName(), value);
@@ -144,7 +144,7 @@ public class SolrOutputPlugin implements OutputPlugin {
                     @Override
                     public void doubleColumn(Column column) {
                         if (pageReader.isNull(column)) {
-                            //do nothing.
+                            // do nothing.
                         } else {
                             double value = pageReader.getDouble(column);
                             doc.addField(column.getName(), value);
@@ -154,7 +154,7 @@ public class SolrOutputPlugin implements OutputPlugin {
                     @Override
                     public void stringColumn(Column column) {
                         if (pageReader.isNull(column)) {
-                            //do nothing.
+                            // do nothing.
                         } else {
                             String value = pageReader.getString(column);
                             doc.addField(column.getName(), value);
@@ -164,10 +164,10 @@ public class SolrOutputPlugin implements OutputPlugin {
                     @Override
                     public void timestampColumn(Column column) {
                         if (pageReader.isNull(column)) {
-                            //do nothing.
+                            // do nothing.
                         } else {
                             Timestamp value = pageReader.getTimestamp(column);
-                            Date dateValue = new Date(value.getEpochSecond());
+                            Date dateValue = new Date(value.getEpochSecond() * 1000);
                             doc.addField(column.getName(), dateValue);
                         }
                     }
@@ -175,25 +175,24 @@ public class SolrOutputPlugin implements OutputPlugin {
                     @Override
                     public void jsonColumn(Column column) {
                         if (pageReader.isNull(column)) {
-                            //do nothing.
+                            // do nothing.
                         } else {
                             Value value = pageReader.getJson(column);
-                            doc.addField(column.getName(), value.toString()); // send json as string.
+                            // send json as a string.
+                            doc.addField(column.getName(), value.toString());
                         }
                     }
                 });
-                
-                System.out.println(doc);
-                
+
                 documentList.add(doc);
-                
+
                 if (documentList.size() >= bulkSize) {
                     try {
                         client.add(documentList);
                         client.commit();
                         documentList.clear();
                     } catch (SolrServerException | IOException e) {
-                        Throwables.propagate(e); //  TODO error handling
+                        Throwables.propagate(e); // TODO error handling
                     }
                 }
             }
@@ -208,7 +207,7 @@ public class SolrOutputPlugin implements OutputPlugin {
                     client.commit();
                     documentList.clear();
                 } catch (SolrServerException | IOException e) {
-                    Throwables.propagate(e); //  TODO error handling
+                    Throwables.propagate(e); // TODO error handling
                 }
             }
         }
@@ -219,7 +218,7 @@ public class SolrOutputPlugin implements OutputPlugin {
                 client.close();
                 client = null;
             } catch (IOException e) {
-                Throwables.propagate(e); //  TODO error handling
+                Throwables.propagate(e); // TODO error handling
             }
         }
 
