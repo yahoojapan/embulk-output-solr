@@ -36,7 +36,7 @@ public class SolrOutputPlugin implements OutputPlugin {
         public String getHost();
 
         @Config("port")
-        @ConfigDefault("8080")
+        @ConfigDefault("8983")
         public int getPort();
 
         @Config("collection")

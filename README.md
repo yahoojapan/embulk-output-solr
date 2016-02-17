@@ -10,7 +10,7 @@
 ## Configuration
 
 - **host**: solr host name. (string, required)
-- **port**: port number of solr. (int, default: `"8080"`)
+- **port**: port number of solr. (int, default: `"8983"`)
 - **collection**: collection name which you want documents put into. (string, required)
 - **bulkSize**: maximum number of documents sending solr at onece. (int, default: `"1000"`)
 
