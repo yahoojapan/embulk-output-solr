@@ -22,7 +22,9 @@ targetCompatibility = 1.7
 dependencies {
     compile  "org.embulk:embulk-core:0.8.3"
     provided "org.embulk:embulk-core:0.8.3"
-    // compile "YOUR_JAR_DEPENDENCY_GROUP:YOUR_JAR_DEPENDENCY_MODULE:YOUR_JAR_DEPENDENCY_VERSION"
+    // using Solrj v5.2.1
+    compile  "org.apache.solr:solr-solrj:5.2.1"
+    compile  "commons-logging:commons-logging:1.2"
     testCompile "junit:junit:4.+"
 }
 
