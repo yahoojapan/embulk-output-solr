@@ -63,7 +63,8 @@ public class SolrOutputPlugin implements OutputPlugin {
 
     @Override
     public ConfigDiff resume(TaskSource taskSource, Schema schema, int taskCount, OutputPlugin.Control control) {
-        throw new UnsupportedOperationException("solr output plugin does not support resuming");
+        // TODO
+        return Exec.newConfigDiff();
     }
 
     @Override
