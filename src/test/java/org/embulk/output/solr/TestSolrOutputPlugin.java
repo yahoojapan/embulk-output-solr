@@ -162,11 +162,16 @@ public class TestSolrOutputPlugin {
     }
 
     private ConfigSource config() {
-        return Exec.newConfigSource().set("in", inputConfig()).set("parser", parserConfig(schemaConfig()))
-                .set("type", "solr").set("host", SOLR_HOST).set("port", SOLR_PORT).set("collection", SOLR_COLLECTION)
+        return Exec.newConfigSource()
+                .set("in", inputConfig())
+                .set("parser", parserConfig(schemaConfig()))
+                .set("type", "solr")
+                .set("host", SOLR_HOST)
+                .set("port", SOLR_PORT)
+                .set("collection", SOLR_COLLECTION)
                 .set("bulkSize", SOLR_BULK_SIZE);
     }
-
+    
     private ImmutableMap<String, Object> inputConfig() {
         ImmutableMap.Builder<String, Object> builder = new ImmutableMap.Builder<>();
         builder.put("type", "file");
