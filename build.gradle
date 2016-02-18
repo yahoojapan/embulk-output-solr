@@ -3,6 +3,7 @@ plugins {
     id "com.github.jruby-gradle.base" version "0.1.5"
     id "java"
     id "checkstyle"
+    id "eclipse"
 }
 import com.github.jrubygradle.JRubyExec
 repositories {
@@ -21,8 +22,12 @@ targetCompatibility = 1.7
 dependencies {
     compile  "org.embulk:embulk-core:0.8.3"
     provided "org.embulk:embulk-core:0.8.3"
-    // compile "YOUR_JAR_DEPENDENCY_GROUP:YOUR_JAR_DEPENDENCY_MODULE:YOUR_JAR_DEPENDENCY_VERSION"
+    // using Solrj v5.2.1
+    compile  "org.apache.solr:solr-solrj:5.2.1"
+    compile  "commons-logging:commons-logging:1.2"
     testCompile "junit:junit:4.+"
+    testCompile "org.embulk:embulk-core:0.8.3:tests"
+    testCompile "org.embulk:embulk-standards:0.8.3"
 }
 
 task classpath(type: Copy, dependsOn: ["jar"]) {
@@ -73,7 +78,7 @@ task gemspec {
 Gem::Specification.new do |spec|
   spec.name          = "${project.name}"
   spec.version       = "${project.version}"
-  spec.authors       = ["\u{5409}\u{7530}\u{3000}\u{5320}"]
+  spec.authors       = ["takumyos"]
   spec.summary       = %[Solr output plugin for Embulk]
   spec.description   = %[Dumps records to Solr.]
   spec.email         = ["takumyos@yahoo-corp.jp"]

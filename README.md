@@ -1,27 +1,33 @@
 # Solr output plugin for Embulk
 
-TODO: Write short description here and build.gradle file.
-
 ## Overview
 
 * **Plugin type**: output
 * **Load all or nothing**: no
 * **Resume supported**: no
-* **Cleanup supported**: yes
+* **Cleanup supported**: no
 
 ## Configuration
 
-- **option1**: description (integer, required)
-- **option2**: description (string, default: `"myvalue"`)
-- **option3**: description (string, default: `null`)
+- **host**: solr host name. (string, required)
+- **port**: port number of solr. (int, default: `"8983"`)
+- **collection**: collection name which you want documents put into. (string, required)
+- **bulkSize**: maximum number of documents sending solr at onece. (int, default: `"1000"`)
+
+### Modes
+
+this plugin support only one mode and you don't need to set mode explicitly.
+the default mode update/insert a document. so if a document has already existed in the collection, it will be updated. if not, it will be inserted into the collection as new document.
 
 ## Example
 
 ```yaml
 out:
   type: solr
-  option1: example1
-  option2: example2
+  host: localhost
+  port: 8080
+  collection: mytest
+  bulkSize: 500
 ```
 
 
