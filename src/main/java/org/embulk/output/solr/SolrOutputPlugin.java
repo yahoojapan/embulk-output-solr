@@ -199,14 +199,13 @@ public class SolrOutputPlugin implements OutputPlugin {
 
                 documentList.add(doc);
 
-//                if (documentList.size() >= bulkSize) {
-//                    sendDocumentToSolr(documentList);
-//                }
+                if (documentList.size() >= bulkSize) {
+                    sendDocumentToSolr(documentList);
+                }
             }
-            
-//            if (documentList.size() != 0) {
-//                sendDocumentToSolr(documentList);
-//            }
+            if (documentList.size() != 0) {
+                sendDocumentToSolr(documentList);
+            }
         }
 
         private void sendDocumentToSolr(List<SolrInputDocument> documentList) {
@@ -214,7 +213,7 @@ public class SolrOutputPlugin implements OutputPlugin {
             while(true) {
                 try {
                     client.add(documentList);
-                    logger.debug("successfully load a bunch of documents to solr. batch count : " + documentList.size());
+                    logger.debug("successfully load a bunch of documents to solr. batch count : " + documentList.size() + " current total count : " + totalCount);
                     documentList.clear(); // when successfully add and commit, clear list.
                     break;
                 } catch (SolrServerException | IOException e) {
