@@ -214,8 +214,8 @@ public class SolrOutputPlugin implements OutputPlugin {
                 try {
                     client.add(documentList);
                     client.commit();
-                    documentList.clear(); // when successfully add and commit, clear list.
                     logger.info("success fully load a bunch of documents to solr. batch count : " + documentList.size());
+                    documentList.clear(); // when successfully add and commit, clear list.
                     break;
                 } catch (SolrServerException | IOException e) {
                     if (retrycount < maxRetry) {
