@@ -120,7 +120,7 @@ public class SolrOutputPlugin implements OutputPlugin {
         
         int totalCount = 0;
         
-        List<SolrInputDocument> documentList = new LinkedList<SolrInputDocument>();
+        private static List<SolrInputDocument> documentList = new LinkedList<SolrInputDocument>();
         
         @Override
         public void add(Page page) {
@@ -198,13 +198,12 @@ public class SolrOutputPlugin implements OutputPlugin {
                 });
 
                 documentList.add(doc);
+            }
 
-                if (documentList.size() >= bulkSize) {
+            if (documentList.size() >= bulkSize) {
+                synchronized(this) {
                     sendDocumentToSolr(documentList);
                 }
-            }
-            if (documentList.size() != 0) {
-                sendDocumentToSolr(documentList);
             }
         }
 
