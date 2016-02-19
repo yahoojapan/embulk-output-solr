@@ -48,7 +48,7 @@ public class SolrOutputPlugin implements OutputPlugin {
     }
 
     private final Logger logger;
-
+    
     @Inject
     public SolrOutputPlugin() {
         logger = Exec.getLogger(getClass());
@@ -88,8 +88,9 @@ public class SolrOutputPlugin implements OutputPlugin {
      * @return SolrClient instance.
      */
     private SolrClient createSolrClient(PluginTask task) {
-        SolrClient solr = new HttpSolrClient(
+        HttpSolrClient solr = new HttpSolrClient(
                 "http://" + task.getHost() + ":" + task.getPort() + "/solr/" + task.getCollection());
+        solr.setConnectionTimeout(10000); // 10 seconds for timeout.
         return solr;
     }
 
@@ -101,6 +102,9 @@ public class SolrOutputPlugin implements OutputPlugin {
         private final Schema schema;
         private PluginTask task;
         private final int bulkSize;
+
+        private final int MAX_RETRY_TIME = 3;
+        
 
         List<SolrInputDocument> documentList = new LinkedList<SolrInputDocument>();
 
@@ -187,12 +191,27 @@ public class SolrOutputPlugin implements OutputPlugin {
                 documentList.add(doc);
 
                 if (documentList.size() >= bulkSize) {
-                    try {
-                        client.add(documentList);
-                        client.commit();
-                        documentList.clear();
-                    } catch (SolrServerException | IOException e) {
+                    sendDocumentToSolr();
+                }
+            }
+        }
+
+        private void sendDocumentToSolr() {
+            int retrycount = 0;
+            while(true) {
+                try {
+                    client.add(documentList);
+                    client.commit();
+                    documentList.clear(); // when successfully add and commit, clear list.
+                    break;
+                } catch (SolrServerException | IOException e) {
+                    if (retrycount < MAX_RETRY_TIME) {
+                        retrycount++;
+                        continue;
+                    } else {
                         Throwables.propagate(e); // TODO error handling
+                        documentList.clear();
+                        break;
                     }
                 }
             }
@@ -201,15 +220,7 @@ public class SolrOutputPlugin implements OutputPlugin {
         @Override
         public void finish() {
             // send rest of all documents.
-            if (!documentList.isEmpty()) {
-                try {
-                    client.add(documentList);
-                    client.commit();
-                    documentList.clear();
-                } catch (SolrServerException | IOException e) {
-                    Throwables.propagate(e); // TODO error handling
-                }
-            }
+            sendDocumentToSolr();
         }
 
         @Override
