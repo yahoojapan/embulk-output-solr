@@ -107,9 +107,6 @@ public class SolrOutputPlugin implements OutputPlugin {
         private final int bulkSize;
 
         private final int maxRetry;
-        
-
-        List<SolrInputDocument> documentList = new LinkedList<SolrInputDocument>();
 
         public SolrPageOutput(SolrClient client, Schema schema, PluginTask task) {
             this.logger = Exec.getLogger(getClass());
@@ -125,8 +122,8 @@ public class SolrOutputPlugin implements OutputPlugin {
         
         @Override
         public void add(Page page) {
-            
-            logger.info("start sending document to Solr.");
+
+            List<SolrInputDocument> documentList = new LinkedList<SolrInputDocument>();
             
             pageReader.setPage(page);
             while (pageReader.nextRecord()) {
@@ -201,13 +198,16 @@ public class SolrOutputPlugin implements OutputPlugin {
                 documentList.add(doc);
 
                 if (documentList.size() >= bulkSize) {
-                    sendDocumentToSolr();
+                    sendDocumentToSolr(documentList);
                 }
             }
             
+            if (documentList.size() != 0) {
+                sendDocumentToSolr(documentList);
+            }
         }
 
-        private void sendDocumentToSolr() {
+        private void sendDocumentToSolr(List<SolrInputDocument> documentList) {
             int retrycount = 0;
             while(true) {
                 try {
@@ -233,7 +233,6 @@ public class SolrOutputPlugin implements OutputPlugin {
         @Override
         public void finish() {
             // send rest of all documents.
-            sendDocumentToSolr();
             logger.info("Done sending document to Solr ! total count : " + totalCount);
         }
 
