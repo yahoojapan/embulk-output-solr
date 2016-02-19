@@ -259,6 +259,9 @@ public class SolrOutputPlugin implements OutputPlugin {
 
         @Override
         public TaskReport commit() {
+            
+            logger.info("commit !!!!!!!!!!!!!!!!!!!!!!!!");
+            
             TaskReport report = Exec.newTaskReport();
             return report;
         }
