@@ -239,6 +239,7 @@ public class SolrOutputPlugin implements OutputPlugin {
 
         @Override
         public void close() {
+            pageReader.close();
             try {
                 client.close();
                 client = null;
