@@ -124,9 +124,14 @@ public class SolrOutputPlugin implements OutputPlugin {
 
         @Override
         public void add(Page page) {
+            
+            logger.info("start sending document to Solr.");
+            
+            int totalCount = 0;
             pageReader.setPage(page);
             while (pageReader.nextRecord()) {
                 final SolrInputDocument doc = new SolrInputDocument();
+                totalCount ++;
 
                 schema.visitColumns(new ColumnVisitor() {
 
@@ -199,6 +204,8 @@ public class SolrOutputPlugin implements OutputPlugin {
                     sendDocumentToSolr();
                 }
             }
+            
+            logger.info("Done sending document to Solr ! total count : " + totalCount);
         }
 
         private void sendDocumentToSolr() {
@@ -208,6 +215,7 @@ public class SolrOutputPlugin implements OutputPlugin {
                     client.add(documentList);
                     client.commit();
                     documentList.clear(); // when successfully add and commit, clear list.
+                    logger.info("success fully load a bunch of documents to solr. batch count : " + documentList.size());
                     break;
                 } catch (SolrServerException | IOException e) {
                     if (retrycount < maxRetry) {
