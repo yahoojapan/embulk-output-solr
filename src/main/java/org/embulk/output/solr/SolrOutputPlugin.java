@@ -120,10 +120,12 @@ public class SolrOutputPlugin implements OutputPlugin {
         
         int totalCount = 0;
         
+        List<SolrInputDocument> documentList = new LinkedList<SolrInputDocument>();
+        
         @Override
         public void add(Page page) {
 
-            List<SolrInputDocument> documentList = new LinkedList<SolrInputDocument>();
+            // List<SolrInputDocument> documentList = new LinkedList<SolrInputDocument>();
             
             pageReader.setPage(page);
             while (pageReader.nextRecord()) {
@@ -197,14 +199,14 @@ public class SolrOutputPlugin implements OutputPlugin {
 
                 documentList.add(doc);
 
-                if (documentList.size() >= bulkSize) {
-                    sendDocumentToSolr(documentList);
-                }
+//                if (documentList.size() >= bulkSize) {
+//                    sendDocumentToSolr(documentList);
+//                }
             }
             
-            if (documentList.size() != 0) {
-                sendDocumentToSolr(documentList);
-            }
+//            if (documentList.size() != 0) {
+//                sendDocumentToSolr(documentList);
+//            }
         }
 
         private void sendDocumentToSolr(List<SolrInputDocument> documentList) {
@@ -212,7 +214,7 @@ public class SolrOutputPlugin implements OutputPlugin {
             while(true) {
                 try {
                     client.add(documentList);
-                    logger.info("success fully load a bunch of documents to solr. batch count : " + documentList.size());
+                    logger.debug("successfully load a bunch of documents to solr. batch count : " + documentList.size());
                     documentList.clear(); // when successfully add and commit, clear list.
                     break;
                 } catch (SolrServerException | IOException e) {
@@ -232,6 +234,7 @@ public class SolrOutputPlugin implements OutputPlugin {
         @Override
         public void finish() {
             try {
+                sendDocumentToSolr(documentList);
                 client.commit();
                 logger.info("Done sending document to Solr ! total count : " + totalCount);
             } catch (SolrServerException | IOException e) {
