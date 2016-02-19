@@ -42,6 +42,10 @@ public class SolrOutputPlugin implements OutputPlugin {
         @Config("collection")
         public String getCollection();
 
+        @Config("maxRetry")
+        @ConfigDefault("5")
+        public int getMaxRetry();
+        
         @Config("bulkSize")
         @ConfigDefault("1000")
         public int getBulkSize();
@@ -103,7 +107,7 @@ public class SolrOutputPlugin implements OutputPlugin {
         private PluginTask task;
         private final int bulkSize;
 
-        private final int MAX_RETRY_TIME = 3;
+        private final int maxRetry;
         
 
         List<SolrInputDocument> documentList = new LinkedList<SolrInputDocument>();
@@ -115,6 +119,7 @@ public class SolrOutputPlugin implements OutputPlugin {
             this.schema = schema;
             this.task = task;
             this.bulkSize = task.getBulkSize();
+            this.maxRetry = task.getMaxRetry();
         }
 
         @Override
@@ -205,7 +210,7 @@ public class SolrOutputPlugin implements OutputPlugin {
                     documentList.clear(); // when successfully add and commit, clear list.
                     break;
                 } catch (SolrServerException | IOException e) {
-                    if (retrycount < MAX_RETRY_TIME) {
+                    if (retrycount < maxRetry) {
                         retrycount++;
                         continue;
                     } else {
