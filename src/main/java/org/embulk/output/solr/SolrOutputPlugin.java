@@ -120,7 +120,7 @@ public class SolrOutputPlugin implements OutputPlugin {
         
         int totalCount = 0;
         
-        private static List<SolrInputDocument> documentList = new LinkedList<SolrInputDocument>();
+        private static List<SolrInputDocument> documentList = java.util.Collections.synchronizedList(new java.util.ArrayList<SolrInputDocument>());
         
         @Override
         public void add(Page page) {
@@ -201,9 +201,7 @@ public class SolrOutputPlugin implements OutputPlugin {
             }
 
             if (documentList.size() >= bulkSize) {
-                synchronized(this) {
-                    sendDocumentToSolr(documentList);
-                }
+                sendDocumentToSolr(documentList);
             }
         }
 
