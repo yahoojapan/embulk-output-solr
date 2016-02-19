@@ -198,11 +198,12 @@ public class SolrOutputPlugin implements OutputPlugin {
                 });
 
                 documentList.add(doc);
+                if (documentList.size() >= bulkSize) {
+                    sendDocumentToSolr(documentList);
+                }
             }
-
-            if (documentList.size() >= bulkSize) {
-                sendDocumentToSolr(documentList);
-            }
+            
+            sendDocumentToSolr(documentList);
         }
 
         private void sendDocumentToSolr(List<SolrInputDocument> documentList) {
