@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
 import org.embulk.config.TaskReport;
@@ -121,13 +120,14 @@ public class SolrOutputPlugin implements OutputPlugin {
             this.bulkSize = task.getBulkSize();
             this.maxRetry = task.getMaxRetry();
         }
-
+        
+        int totalCount = 0;
+        
         @Override
         public void add(Page page) {
             
             logger.info("start sending document to Solr.");
             
-            int totalCount = 0;
             pageReader.setPage(page);
             while (pageReader.nextRecord()) {
                 final SolrInputDocument doc = new SolrInputDocument();
@@ -205,7 +205,6 @@ public class SolrOutputPlugin implements OutputPlugin {
                 }
             }
             
-            logger.info("Done sending document to Solr ! total count : " + totalCount);
         }
 
         private void sendDocumentToSolr() {
@@ -224,9 +223,8 @@ public class SolrOutputPlugin implements OutputPlugin {
                         continue;
                     } else {
                         logger.error("failed to send document to solr. ", e);
-                        Throwables.propagate(e); // TODO error handling
                         documentList.clear();
-                        break;
+                        throw new RuntimeException(e);
                     }
                 }
             }
@@ -236,6 +234,7 @@ public class SolrOutputPlugin implements OutputPlugin {
         public void finish() {
             // send rest of all documents.
             sendDocumentToSolr();
+            logger.info("Done sending document to Solr ! total count : " + totalCount);
         }
 
         @Override
@@ -244,7 +243,7 @@ public class SolrOutputPlugin implements OutputPlugin {
                 client.close();
                 client = null;
             } catch (IOException e) {
-                Throwables.propagate(e); // TODO error handling
+                // do nothing.
             }
         }
 
