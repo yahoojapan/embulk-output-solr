@@ -212,7 +212,6 @@ public class SolrOutputPlugin implements OutputPlugin {
             while(true) {
                 try {
                     client.add(documentList);
-                    client.commit();
                     logger.info("success fully load a bunch of documents to solr. batch count : " + documentList.size());
                     documentList.clear(); // when successfully add and commit, clear list.
                     break;
@@ -232,8 +231,12 @@ public class SolrOutputPlugin implements OutputPlugin {
 
         @Override
         public void finish() {
-            // send rest of all documents.
-            logger.info("Done sending document to Solr ! total count : " + totalCount);
+            try {
+                client.commit();
+                logger.info("Done sending document to Solr ! total count : " + totalCount);
+            } catch (SolrServerException | IOException e) {
+                logger.info("failed to commit document. ", e);
+            }
         }
 
         @Override
