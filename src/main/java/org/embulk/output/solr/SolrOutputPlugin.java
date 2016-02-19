@@ -10,6 +10,7 @@ import org.embulk.config.TaskReport;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.impl.HttpSolrClient.RemoteSolrException;
 import org.apache.solr.common.SolrInputDocument;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
@@ -93,7 +94,7 @@ public class SolrOutputPlugin implements OutputPlugin {
     private SolrClient createSolrClient(PluginTask task) {
         HttpSolrClient solr = new HttpSolrClient(
                 "http://" + task.getHost() + ":" + task.getPort() + "/solr/" + task.getCollection());
-        solr.setConnectionTimeout(10000); // 10 seconds for timeout.
+        // solr.setConnectionTimeout(10000); // 10 seconds for timeout.
         return solr;
     }
 
@@ -120,8 +121,8 @@ public class SolrOutputPlugin implements OutputPlugin {
         
         int totalCount = 0;
         
-        private static List<SolrInputDocument> documentList = java.util.Collections.synchronizedList(new java.util.ArrayList<SolrInputDocument>());
-        
+	private List<SolrInputDocument> documentList = new LinkedList<SolrInputDocument>();
+
         @Override
         public void add(Page page) {
 
@@ -197,21 +198,27 @@ public class SolrOutputPlugin implements OutputPlugin {
                     }
                 });
 
+                // TODO debug.
+                // System.out.println(doc);
+
                 documentList.add(doc);
                 if (documentList.size() >= bulkSize) {
                     sendDocumentToSolr(documentList);
                 }
             }
             
-            sendDocumentToSolr(documentList);
+            if (documentList.size() >= bulkSize) {
+               sendDocumentToSolr(documentList);
+            }
         }
 
         private void sendDocumentToSolr(List<SolrInputDocument> documentList) {
             int retrycount = 0;
             while(true) {
                 try {
+                    logger.info("start sending document to solr.");
                     client.add(documentList);
-                    logger.debug("successfully load a bunch of documents to solr. batch count : " + documentList.size() + " current total count : " + totalCount);
+                    logger.info("successfully load a bunch of documents to solr. batch count : " + documentList.size() + " current total count : " + totalCount);
                     documentList.clear(); // when successfully add and commit, clear list.
                     break;
                 } catch (SolrServerException | IOException e) {
@@ -225,6 +232,10 @@ public class SolrOutputPlugin implements OutputPlugin {
                         throw new RuntimeException(e);
                     }
                 }
+                // if you get Bad request from server, then the thread will be die...
+                //} catch (RemoteSolrException e) {
+                //    logger.error("bad request ? : ", e);
+                //}
             }
         }
 
