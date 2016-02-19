@@ -220,8 +220,10 @@ public class SolrOutputPlugin implements OutputPlugin {
                 } catch (SolrServerException | IOException e) {
                     if (retrycount < maxRetry) {
                         retrycount++;
+                        logger.debug("RETRYing : " + retrycount);
                         continue;
                     } else {
+                        logger.error("failed to send document to solr. ", e);
                         Throwables.propagate(e); // TODO error handling
                         documentList.clear();
                         break;
