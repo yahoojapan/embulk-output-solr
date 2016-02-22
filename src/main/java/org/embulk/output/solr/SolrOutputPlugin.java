@@ -125,9 +125,6 @@ public class SolrOutputPlugin implements OutputPlugin {
 
         @Override
         public void add(Page page) {
-
-            // List<SolrInputDocument> documentList = new LinkedList<SolrInputDocument>();
-            
             pageReader.setPage(page);
             while (pageReader.nextRecord()) {
                 final SolrInputDocument doc = new SolrInputDocument();
@@ -197,10 +194,7 @@ public class SolrOutputPlugin implements OutputPlugin {
                         }
                     }
                 });
-
-                // TODO debug.
-                // System.out.println(doc);
-
+                
                 documentList.add(doc);
                 if (documentList.size() >= bulkSize) {
                     sendDocumentToSolr(documentList);
@@ -216,9 +210,9 @@ public class SolrOutputPlugin implements OutputPlugin {
             int retrycount = 0;
             while(true) {
                 try {
-                    logger.info("start sending document to solr.");
+                    logger.debug("start sending document to solr.");
                     client.add(documentList);
-                    logger.info("successfully load a bunch of documents to solr. batch count : " + documentList.size() + " current total count : " + totalCount);
+                    logger.debug("successfully load a bunch of documents to solr. batch count : " + documentList.size() + " current total count : " + totalCount);
                     documentList.clear(); // when successfully add and commit, clear list.
                     break;
                 } catch (SolrServerException | IOException e) {
@@ -244,7 +238,7 @@ public class SolrOutputPlugin implements OutputPlugin {
             try {
                 sendDocumentToSolr(documentList);
                 client.commit();
-                logger.info("Done sending document to Solr ! total count : " + totalCount);
+                logger.info("Done sending document to Solr in the thread! Total Count : " + totalCount);
             } catch (SolrServerException | IOException e) {
                 logger.info("failed to commit document. ", e);
             }
@@ -267,9 +261,6 @@ public class SolrOutputPlugin implements OutputPlugin {
 
         @Override
         public TaskReport commit() {
-            
-            logger.info("commit !!!!!!!!!!!!!!!!!!!!!!!!");
-            
             TaskReport report = Exec.newTaskReport();
             return report;
         }
