@@ -186,7 +186,6 @@ public class SolrOutputPlugin implements OutputPlugin {
                         } else {
                             String value = pageReader.getString(column);
                             if (value != null && !value.equals("")){
-                                System.out.println(value);
                                 addFieldValue(mergeDoc, doc, multValuedField, column, value);
                             }
                         }
