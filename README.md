@@ -13,6 +13,8 @@
 - **port**: port number of solr. (int, default: `"8983"`)
 - **collection**: collection name which you want documents put into. (string, required)
 - **bulkSize**: maximum number of documents sending solr at onece. (int, default: `"1000"`)
+- **idColumnName**: id column name. (string, required)
+- **multiValuedField**: multiValued field column name. (string, optional)
 
 ### Modes
 
@@ -28,6 +30,9 @@ out:
   port: 8080
   collection: mytest
   bulkSize: 500
+  idColumnName: id
+  multiValuedField:
+    - category
 ```
 
 

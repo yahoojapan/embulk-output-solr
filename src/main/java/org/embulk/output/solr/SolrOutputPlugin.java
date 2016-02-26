@@ -4,13 +4,14 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+
+import com.google.common.base.Optional;
 import com.google.inject.Inject;
 
 import org.embulk.config.TaskReport;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
-import org.apache.solr.client.solrj.impl.HttpSolrClient.RemoteSolrException;
 import org.apache.solr.common.SolrInputDocument;
 import org.embulk.config.Config;
 import org.embulk.config.ConfigDefault;
@@ -27,6 +28,12 @@ import org.embulk.spi.PageReader;
 import org.embulk.spi.Schema;
 import org.embulk.spi.TransactionalPageOutput;
 import org.embulk.spi.time.Timestamp;
+import org.embulk.spi.type.BooleanType;
+import org.embulk.spi.type.DoubleType;
+import org.embulk.spi.type.LongType;
+import org.embulk.spi.type.StringType;
+import org.embulk.spi.type.TimestampType;
+import org.embulk.spi.type.Type;
 import org.msgpack.value.Value;
 import org.slf4j.Logger;
 
@@ -49,6 +56,13 @@ public class SolrOutputPlugin implements OutputPlugin {
         @Config("bulkSize")
         @ConfigDefault("1000")
         public int getBulkSize();
+
+        @Config("idColumnName")
+        public String getIdColumnName();
+        
+        @Config("multiValuedField")
+        @ConfigDefault("null")
+        public Optional<List<String>> getMultiValuedField();
     }
 
     private final Logger logger;
@@ -122,14 +136,17 @@ public class SolrOutputPlugin implements OutputPlugin {
         int totalCount = 0;
         
 	private List<SolrInputDocument> documentList = new LinkedList<SolrInputDocument>();
+	private SolrInputDocument lastDoc = null;
 
         @Override
         public void add(Page page) {
             pageReader.setPage(page);
             while (pageReader.nextRecord()) {
+                
+                final boolean mergeDoc = isSameIDWithLastDoc(pageReader, lastDoc, task.getMultiValuedField().orNull());
                 final SolrInputDocument doc = new SolrInputDocument();
-                totalCount ++;
-
+                final List<String> multValuedField = task.getMultiValuedField().orNull();
+                
                 schema.visitColumns(new ColumnVisitor() {
 
                     @Override
@@ -138,7 +155,7 @@ public class SolrOutputPlugin implements OutputPlugin {
                             // do nothing.
                         } else {
                             boolean value = pageReader.getBoolean(column);
-                            doc.addField(column.getName(), value);
+                            addFieldValue(mergeDoc, doc, multValuedField, column, value);
                         }
                     }
 
@@ -148,7 +165,7 @@ public class SolrOutputPlugin implements OutputPlugin {
                             // do nothing.
                         } else {
                             long value = pageReader.getLong(column);
-                            doc.addField(column.getName(), value);
+                            addFieldValue(mergeDoc, doc, multValuedField, column, value);
                         }
                     }
 
@@ -158,7 +175,7 @@ public class SolrOutputPlugin implements OutputPlugin {
                             // do nothing.
                         } else {
                             double value = pageReader.getDouble(column);
-                            doc.addField(column.getName(), value);
+                            addFieldValue(mergeDoc, doc, multValuedField, column, value);
                         }
                     }
 
@@ -168,7 +185,10 @@ public class SolrOutputPlugin implements OutputPlugin {
                             // do nothing.
                         } else {
                             String value = pageReader.getString(column);
-                            doc.addField(column.getName(), value);
+                            if (value != null && !value.equals("")){
+                                System.out.println(value);
+                                addFieldValue(mergeDoc, doc, multValuedField, column, value);
+                            }
                         }
                     }
 
@@ -178,8 +198,10 @@ public class SolrOutputPlugin implements OutputPlugin {
                             // do nothing.
                         } else {
                             Timestamp value = pageReader.getTimestamp(column);
-                            Date dateValue = new Date(value.getEpochSecond() * 1000);
-                            doc.addField(column.getName(), dateValue);
+                            if (!value.equals(""))  {
+                                Date dateValue = new Date(value.getEpochSecond() * 1000);
+                                addFieldValue(mergeDoc, doc, multValuedField, column, dateValue);
+                            }
                         }
                     }
 
@@ -190,12 +212,34 @@ public class SolrOutputPlugin implements OutputPlugin {
                         } else {
                             Value value = pageReader.getJson(column);
                             // send json as a string.
-                            doc.addField(column.getName(), value.toString());
+                            if (!value.equals("")) {
+                                addFieldValue(mergeDoc, doc, multValuedField, column, value.toString());
+                            }
+                        }
+                    }
+                    
+
+                    private void addFieldValue(final boolean mergeDoc, final SolrInputDocument doc,
+                            final List<String> multValuedField, Column column, Object value) {
+                        if (mergeDoc) {
+                            String n = column.getName();
+                            for (String f : multValuedField) {
+                                if (n.equals(f)) {
+                                    lastDoc.addField(column.getName(), value);
+                                    return;
+                                }
+                            }
+                        } else {
+                            doc.addField(column.getName(), value);
                         }
                     }
                 });
                 
-                documentList.add(doc);
+                if(!mergeDoc) {
+                    documentList.add(doc);
+                    lastDoc = doc;
+                }
+                
                 if (documentList.size() >= bulkSize) {
                     sendDocumentToSolr(documentList);
                 }
@@ -204,6 +248,69 @@ public class SolrOutputPlugin implements OutputPlugin {
             if (documentList.size() >= bulkSize) {
                sendDocumentToSolr(documentList);
             }
+        }
+
+        private boolean isSameIDWithLastDoc(PageReader pageReader, SolrInputDocument lastDoc, List<String> multiValuedFieldList) {
+            if (multiValuedFieldList == null || multiValuedFieldList.size()==0){
+                return false;
+            }
+            boolean mergeDoc = false;
+            List<Column> columnList = pageReader.getSchema().getColumns();
+            for (Column c : columnList) {
+                if (c.getName().equals(task.getIdColumnName())) {
+                    Type type = c.getType();
+                    if (type instanceof BooleanType) {
+                        boolean value = pageReader.getBoolean(c);
+                        if (lastDoc != null) {
+                            boolean b = (boolean) lastDoc.get(task.getIdColumnName()).getValue();
+                            if (value==b) {
+                                mergeDoc = true;
+                                break;
+                            }
+                        }
+                    } else if (type instanceof LongType) {
+                        long value = pageReader.getLong(c);
+                        if (lastDoc != null) {
+                            long b = (long) lastDoc.get(task.getIdColumnName()).getValue();
+                            if (value==b) {
+                                mergeDoc = true;
+                                break;
+                            }
+                        }
+                    } else if (type instanceof DoubleType) {
+                        double value = pageReader.getDouble(c);
+                        if (lastDoc != null) {
+                            double b = (double) lastDoc.get(task.getIdColumnName()).getValue();
+                            if (value==b) {
+                                mergeDoc = true;
+                                break;
+                            }
+                        }
+                    } else if (type instanceof StringType) {
+                        String value = pageReader.getString(c);
+                        if (lastDoc != null) {
+                            String b = (String) lastDoc.get(task.getIdColumnName()).getValue();
+                            if (value.equals(b)) {
+                                mergeDoc = true;
+                                break;
+                            }
+                        }
+                    } else if (type instanceof TimestampType) {
+                        Timestamp value = pageReader.getTimestamp(c);
+                        Date dateValue = new Date(value.getEpochSecond() * 1000);
+                        if (lastDoc != null) {
+                            Date b = (Date) lastDoc.get(task.getIdColumnName()).getValue();
+                            if (dateValue.compareTo(b)==0) {
+                                mergeDoc = true;
+                                break;
+                            }
+                        }
+                    } else {
+                        throw new RuntimeException("Could not find column definition for name : " + task.getIdColumnName());
+                    }
+                }
+            }
+            return mergeDoc;
         }
 
         private void sendDocumentToSolr(List<SolrInputDocument> documentList) {
