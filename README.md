@@ -23,11 +23,11 @@ the default mode update/insert a document. so if a document has already existed 
 
 ## About multi-valued
 
-Embluk does not allow multi-column as same name in a record. so if you want to feed multiValued field, you need to split data first. see this config example.
+Embluk does not allow multi-column with same name in a record. so if you want to feed multiValued field, you need to split data first. see this config example.
 
 A column 'category' have multi values delimited with '||'. (ex. 'Animation||Drama||War')
 
-```
+```yaml
 filters:
 - type: split
   delimiter: '||'
@@ -35,14 +35,23 @@ filters:
   target_key: category
 out:
   type: solr
-  host: 172.21.180.153
-  port: 8080
+  host: localhost
+  port: 8983
   collection: mytest
   bulkSize: 1000
   idColumnName: id
   multiValuedField:
     - category
 ```
+
+After split data, record previews as following.
+```
+| id:string | title:string     | category:string |
+|         1 | Toy Story (1995) |       Animation |
+|         1 | Toy Story (1995) |      Children's |
+|         1 | Toy Story (1995) |          Comedy |
+```
+
 
 Also note this plugin assume records are sorted by id column value. So even if you don't need to use split plugin, you need to sort record to feed multiValued field.
 
@@ -52,7 +61,7 @@ Also note this plugin assume records are sorted by id column value. So even if y
 out:
   type: solr
   host: localhost
-  port: 8080
+  port: 8983
   collection: mytest
   bulkSize: 500
   idColumnName: id
