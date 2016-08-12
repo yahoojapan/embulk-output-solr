@@ -135,55 +135,56 @@ public class TestSolrOutputPlugin {
         // no error happens
     }
 
-    @Test
-    public void testOutputByOpen() throws SolrServerException, IOException, NoSuchMethodException, SecurityException,
-            IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        ConfigSource config = config();
-        Schema schema = config.getNested("parser").loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig()
-                .toSchema();
-        PluginTask task = config.loadConfig(PluginTask.class);
-        plugin.transaction(config, schema, 0, new OutputPlugin.Control() {
-            @Override
-            public List<TaskReport> run(TaskSource taskSource) {
-                return Lists.newArrayList(Exec.newTaskReport());
-            }
-        });
-        TransactionalPageOutput output = plugin.open(task.dump(), schema, 0);
-
-        List<Page> pages = PageTestUtils.buildPage(runtime.getBufferAllocator(), schema, "1", 32864L,
-                Timestamp.ofEpochSecond(1422386629), Timestamp.ofEpochSecond(1422316800), true, 123.45, "embulk");
-        assertEquals(1, pages.size());
-        for (Page page : pages) {
-            output.add(page);
-        }
-
-        output.finish();
-        output.commit();
-
-        Method createClient = SolrOutputPlugin.class.getDeclaredMethod("createSolrClient", PluginTask.class);
-        createClient.setAccessible(true);
-        try (SolrClient client = (SolrClient) createClient.invoke(plugin, task)) {
-            SolrQuery query = new SolrQuery();
-            query.set("q", "id:1");
-            QueryResponse response = client.query(query);
-
-            assertEquals(1, response.getResults().size());
-            if (response.getResults().size() > 0) {
-
-                SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-                dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-
-                SolrDocument map = response.getResults().get(0);
-                assertEquals("1", map.get("id"));
-                assertEquals(32864L, map.get("account_l"));
-                assertEquals("2015-01-27T19:23:49.000Z", dateFormatter.format(map.get("time_dt")));
-                assertEquals("2015-01-27T00:00:00.000Z", dateFormatter.format(map.get("purchase_dt")));
-                assertEquals(true, map.get("flg_b"));
-                assertEquals(123.45, map.get("score_d"));
-                assertEquals("embulk", map.get("comment_s"));
-            }
-        }
-    }
+      // you cannnot execute following test case without Solr runnning on localhost.
+//    @Test
+//    public void testOutputByOpen() throws SolrServerException, IOException, NoSuchMethodException, SecurityException,
+//            IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+//        ConfigSource config = config();
+//        Schema schema = config.getNested("parser").loadConfig(CsvParserPlugin.PluginTask.class).getSchemaConfig()
+//                .toSchema();
+//        PluginTask task = config.loadConfig(PluginTask.class);
+//        plugin.transaction(config, schema, 0, new OutputPlugin.Control() {
+//            @Override
+//            public List<TaskReport> run(TaskSource taskSource) {
+//                return Lists.newArrayList(Exec.newTaskReport());
+//            }
+//        });
+//        TransactionalPageOutput output = plugin.open(task.dump(), schema, 0);
+//
+//        List<Page> pages = PageTestUtils.buildPage(runtime.getBufferAllocator(), schema, "1", 32864L,
+//                Timestamp.ofEpochSecond(1422386629), Timestamp.ofEpochSecond(1422316800), true, 123.45, "embulk");
+//        assertEquals(1, pages.size());
+//        for (Page page : pages) {
+//            output.add(page);
+//        }
+//
+//        output.finish();
+//        output.commit();
+//
+//        Method createClient = SolrOutputPlugin.class.getDeclaredMethod("createSolrClient", PluginTask.class);
+//        createClient.setAccessible(true);
+//        try (SolrClient client = (SolrClient) createClient.invoke(plugin, task)) {
+//            SolrQuery query = new SolrQuery();
+//            query.set("q", "id:1");
+//            QueryResponse response = client.query(query);
+//
+//            assertEquals(1, response.getResults().size());
+//            if (response.getResults().size() > 0) {
+//
+//                SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+//                dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+//
+//                SolrDocument map = response.getResults().get(0);
+//                assertEquals("1", map.get("id"));
+//                assertEquals(32864L, map.get("account_l"));
+//                assertEquals("2015-01-27T19:23:49.000Z", dateFormatter.format(map.get("time_dt")));
+//                assertEquals("2015-01-27T00:00:00.000Z", dateFormatter.format(map.get("purchase_dt")));
+//                assertEquals(true, map.get("flg_b"));
+//                assertEquals(123.45, map.get("score_d"));
+//                assertEquals("embulk", map.get("comment_s"));
+//            }
+//        }
+//    }
 
     private ConfigSource config() {
         return Exec.newConfigSource()
@@ -193,7 +194,8 @@ public class TestSolrOutputPlugin {
                 .set("host", SOLR_HOST)
                 .set("port", SOLR_PORT)
                 .set("collection", SOLR_COLLECTION)
-                .set("bulkSize", SOLR_BULK_SIZE);
+                .set("bulkSize", SOLR_BULK_SIZE)
+                .set("idColumnName", "id");
     }
     
     private ImmutableMap<String, Object> inputConfig() {
