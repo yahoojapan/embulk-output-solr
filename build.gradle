@@ -83,7 +83,7 @@ Gem::Specification.new do |spec|
   spec.description   = %[Dumps records to Solr.]
   spec.email         = ["takumyos@yahoo-corp.jp"]
   spec.licenses      = ["MIT"]
-  # TODO set this: spec.homepage      = "https://github.com/takumyos/embulk-output-solr"
+  spec.homepage      = "https://github.com/yahoojapan/embulk-output-solr"
 
   spec.files         = `git ls-files`.split("\n") + Dir["classpath/*.jar"]
   spec.test_files    = spec.files.grep(%r"^(test|spec)/")
