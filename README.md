@@ -75,3 +75,14 @@ out:
 ```
 $ ./gradlew gem  # -t to watch change of files and rebuild continuously
 ```
+
+
+## How to send Pull Request 
+
+If you would like to send a patch or Pull Request to this repository, please agree with our CLA before that. Please check following steps.
+
+1. You send Pull Request to our Yahoo! JAPAN OSS.
+2. We send you CLA to get agreement from you.
+  - Yahoo! JAPAN CLA　https://gist.github.com/ydnjp/3095832f100d5c3d2592
+3. You agree with the CLA.
+4. We review your Pull Request and merge it. 
