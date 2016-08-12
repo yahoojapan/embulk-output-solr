@@ -78,7 +78,7 @@ task gemspec {
 Gem::Specification.new do |spec|
   spec.name          = "${project.name}"
   spec.version       = "${project.version}"
-  spec.authors       = ["takumyos"]
+  spec.authors       = ["yoshi0309"]
   spec.summary       = %[Solr output plugin for Embulk]
   spec.description   = %[Dumps records to Solr.]
   spec.email         = ["takumyos@yahoo-corp.jp"]
